@@ -1,0 +1,171 @@
+---
+title: "TidyText - Tokenization & N-grams"
+output:
+  word_document: default
+  html_notebook: default
+  pdf_document: default
+---
+```{r}
+#install.packages("Rtools")
+#install.packages("tidytext")
+#install.packages("janeautenr")
+#install.packages("stringr")
+```
+
+```{r}
+library(dplyr)
+library(tidytext)
+library(janeaustenr)
+library(stringr)
+
+```
+
+```{r}
+text<-c("John likes to watch movies. Mary likes too.","John also likes to watch football game.")
+text
+class(text)
+
+```
+```{r}
+#### Contruct text in a structred format - dataframe/tibble ####
+
+text_df<-data_frame(text=text)  ## column name is text
+text_df
+
+text_tb<-tibble(text1=text) ## column name is text1
+text_tb
+str(text_tb)
+
+text_df1<-data_frame(line =1:2, text1=text) # adding the column 'line'
+
+text_df1$line
+text_df1$text1
+
+text_tb$text1  ## select a specific column from the data frame
+
+```
+```{r}
+#### Tokenization ####
+
+unnest_tokens(text_df1, word, text1)      # tokenize the text in 'text1' column into word
+text_df1 %>% unnest_tokens(word, text1)
+
+tokens<-unnest_tokens(text_df1, token, text1) #create a dataframe with tokens and assign to tokens
+tokens
+
+count(tokens, token, sort=TRUE)  # count the term frequency
+
+
+library(ggplot2)
+count(tokens, token, sort=TRUE) %>% ggplot(aes(x=token, y=n)) + geom_point(col="steelblue")
+
+count(tokens, token, sort=TRUE)%>% ggplot(aes(x=token,y=n)) + geom_col()
+
+count(tokens, token, sort=TRUE)%>% ggplot(aes(x=token,y=n)) + geom_col(fill="steelblue") + labs(title="Term Frquency", x="term", y="frequency")
+```
+
+
+
+
+```{r}
+#### Tokenization on books ####
+tidy_books<-books %>% unnest_tokens(word, text)
+tidy_books
+```
+```{r}
+data("stop_words")    ## load the stop words ##
+head(stop_words)
+tidy_books<-tidy_books %>% anti_join(stop_words, by="word")
+tidy_books
+dim(tidy_books)
+tidy_books %>% count(word, sort=TRUE) ->word_fr ## word and number of frequence of tidy_book 
+                                                ## are assigned to word_fr
+
+
+
+#install.packages("wordcloud")
+library("wordcloud")
+# create a wordcloud
+wordcloud(word_fr$word, word_fr$n,  min.freq = 500)
+```
+```{r}
+library(ggplot2)
+tidy_books %>% count(word, sort=TRUE) %>% 
+  filter(n>700) %>% 
+  mutate(word=reorder(word, n)) %>% 
+  ggplot(aes(word, n))+
+  geom_col()+
+  coord_flip()
+```
+
+```{r}
+
+library(tidyr)
+bigram <- books %>% unnest_tokens(bigram, text, token = "ngrams", n=2) %>% 
+  filter(!is.na(bigram))
+bigram
+
+bigram2 <-austen_books() %>% unnest_tokens(bigram, text, token="ngrams", n=2) %>% 
+  drop_na() ## drop rows with  missing values
+
+```
+```{r}
+bigram %>% count(bigram, sort=TRUE)
+```
+
+```{r}
+library(tidyr)
+
+## split bigram into two columns 'term1', 'term2'
+bigram_sep <-bigram %>% 
+  separate(bigram, c("term1", "term2"), sep=" ") 
+bigram_sep
+```
+```{r}
+# Clean the terms with stop words
+bigram_term_cleaned <-bigram_sep %>% 
+  filter(!term1 %in% stop_words$word) %>% 
+  filter(!term2 %in% stop_words$word)
+bigram_term_cleaned
+```
+```{r}
+# Count the frequency of terms after cleaning the terms
+bigram_count <- bigram_term_cleaned %>% 
+  count(term1, term2, sort=TRUE)
+bigram_count
+```
+```{r}
+# Merge two columns into one column 'bigram'
+bigram_united <-bigram_term_cleaned %>% 
+  unite(bigram, term1, term2, sep=" ")
+bigram_united
+```
+
+```{r}
+# Search term 'love' and count the frequency of the related term (consecutive terms)
+bigram_term_cleaned %>% 
+  filter(term2=="love") %>% 
+  count(book, term1, sort=TRUE)
+```
+```{r}
+#### Construct a semantic network
+#install.packages("igraph")
+library(igraph)
+bigram_count 
+class(bigram_count)
+
+g<-filter(bigram_count, n>30) %>%  graph_from_data_frame()   # Convert into the igraph object
+g
+V(g)  # Show vertex 
+g
+class(g)  
+plot(g)   # Display a word network graph
+
+
+pacman::p_load(ggraph)
+library(ggraph)
+set.seed(2017)
+ggraph(g, layout="fr") + geom_edge_link() + geom_node_point() + geom_node_text(aes(label=name), vjust=1, hjust=1)
+
+```
+
