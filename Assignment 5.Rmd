@@ -1,0 +1,59 @@
+---
+title: "A4-Wordcloud Assignment"
+author: "Priscilla Nornoo"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+````{r}
+##1. Install wordcloud package
+#install.packages("tm")
+#install.packages("SnowballC")
+library(tm) # for basic text-mining functions
+library(SnowballC) # stemming library & others
+library(wordcloud)
+library(tidytext)
+library(dplyr)
+rm(list = ls()) 
+````
+
+````{r}
+##2. Read data - "cis428_health.csv"
+ds <- read.csv("cis428_health.csv")
+names(ds)
+````
+````{r}
+#3. Display - structure of data
+head(ds)
+str(ds)
+````
+````{r}
+#4. Subset the data - Use "title" column (variable)
+ds1<- ds[c(2)]
+ds1
+class(ds1)
+````
+````{r}
+text_corpus <- VCorpus(VectorSource(ds1))
+````
+
+````{r}
+#5. Tokenize words in text_corpus - Use unnest_tokens() function from tidytext
+text_corpus <- ds1 %>% unnest_tokens(word, title) #create a dataframe with text_corpus and assign to text_corpus
+text_corpus
+````
+````{r}
+# Cleanse text: these are a sequence of common steps, each of which "cleanses" the data from specific issues
+### These steps successively replace the contents of "text_corpus"
+text_corpus <- Corpus(VectorSource(text_corpus))
+text_corpus <- tm_map(text_corpus,removeWords,stopwords("en")) # remove stop words (ie, common words which do not add meaning, "i", "me", "it", "be", etc.). For full list of all stop words, enter command "stopwords("en")"
+text_corpus <- tm_map(text_corpus,stripWhitespace) # eliminates excesive white space (no meaning)
+text_corpus <- tm_map(text_corpus,removePunctuation) # removes punctuation (no meaning)
+text_corpus
+count(text_corpus,content,sort = TRUE )
+````
+
+count(tokens, token, sort=TRUE) 
+
+
+
