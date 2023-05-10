@@ -1,0 +1,90 @@
+---
+title: "Assignment 3"
+author: "Priscilla Nornoo"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  html_document: default
+---
+
+````{r}
+#install.packages("Rtools")
+#install.packages("tidytext")
+#install.packages("janeautenr")
+#install.packages("stringr")
+````
+
+````{r}
+library(dplyr)
+library(tidytext)
+library(janeaustenr)
+library(stringr)
+````
+
+````{r}
+#1. Read data - "sentiment.csv"
+text <- read.csv("sentiment.csv", stringsAsFactors = FALSE)
+text
+class(text)
+````
+````{r}
+#2. Subset the Data - Use "ItemID" & "SentimentText" for the "Sentiment.csv"
+newdata <- text[c(1,4)]
+class(newdata)
+````
+
+````{r}
+#3. Tokenize words in SentimentText - Use unnest_tokens () function from tidytext
+newdata %>% unnest_tokens(word, SentimentText) # tokenize the text in 'SentimentText' column into word
+
+tokens<-unnest_tokens(newdata, token, SentimentText) #create a dataframe with tokens and assign to tokens
+tokens
+````
+
+````{r}
+#4. Count the words and sort them by the number
+count(tokens, token, sort=TRUE)  # count the term frequency
+````
+
+````{r}
+#5. Plot words by the number (greater than 10)- whatever kind you like
+library(ggplot2)
+library(dplyr)
+
+count(tokens, token, sort=TRUE) %>% filter(n>10) %>% ggplot(aes(x=token, y=n)) + geom_point(col="steelblue") 
+
+count(tokens, token, sort=TRUE)%>% filter(n>10) %>% ggplot(aes(x=token,y=n)) + geom_col()
+
+count(tokens, token, sort=TRUE)%>% filter (n>10) %>% ggplot(aes(x=token,y=n)) + geom_col(fill="steelblue") + labs(title="Term Frequency", x="term", y="frequency") 
+````
+````{r}
+#6. Read data - "inaugural address all.txt" and perform # 3~5 tasks.
+data <- read.delim("Inaugural Address All.txt", header = FALSE)
+str(data)
+class(data)
+```
+````{r}
+#6a. Tokenize words in "inaugural address all.txt - Use unnest_tokens () function from tidytext
+data %>% unnest_tokens(word, V1) # tokenize the text in 'V1' column into word
+
+tokens<-unnest_tokens(data, token, V1) #create a dataframe with tokens and assign to tokens
+tokens
+````
+````{r}
+#6b. Count the words and sort them by the number
+count(tokens, token, sort=TRUE)  # count the term frequency
+````
+````{r}
+#6c. Plot words by the number (greater than 10)- whatever kind you like
+library(ggplot2)
+library(dplyr)
+
+count(tokens, token, sort=TRUE) %>% filter(n>10) %>% ggplot(aes(x=token, y=n)) + geom_point(col="steelblue") 
+
+count(tokens, token, sort=TRUE)%>% filter(n>10) %>% ggplot(aes(x=token,y=n)) + geom_col()
+
+count(tokens, token, sort=TRUE)%>% filter (n>10) %>% ggplot(aes(x=token,y=n)) + geom_col(fill="steelblue") + labs(title="Term Frequency", x="term", y="frequency")
+```
+
+
+
